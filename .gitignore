@@ -1,8 +1,10 @@
 # caffemodel
 *.caffemodel
 
-# somefolders
+# somefolders & large files
+output/
 external/
+src/nist27_4205_preboxes.mat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
