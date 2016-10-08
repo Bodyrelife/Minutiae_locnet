@@ -19,7 +19,7 @@ def mnt_reader(file_name):
 def load_nist27():
     image_base = '/media/ssd2/tangy/nist27/latent_p/'
     image_files = glob.glob(os.path.join(image_base, "*.bmp"))
-    mnt_base = '/media/ssd2/tangy/nist27/latent_m_MNT/'
+    mnt_base = '/media/ssd2/tangy/nist27/latent_i_MNT/'
     data = {}
     for image in image_files:
         _, name = os.path.split(image)
@@ -99,7 +99,5 @@ def train_valid_test_split(logging):
         %(len(nist27_valid), len(m4205_valid), len(fvc2002_db2a_valid)))  
     logging.info('Test:')
     logging.info('Nist27: %d' %(len(nist27_test)))      
-    logging.info('Done.')
-    train_sample_rate = (0.5, 0.5, 0.0)
-    logging.info('Train sample rage: Nist27 50%, 4205 25%, Fvc2002 db2a 25%')    
-    return train_set, valid_set, test_set, train_sample_rate
+    logging.info('Done.')  
+    return train_set, valid_set, test_set

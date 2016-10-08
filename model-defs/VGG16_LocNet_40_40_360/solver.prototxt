@@ -1,7 +1,7 @@
 net: "/media/ssd2/gaof/Minutiae_locnet/model-defs/VGG16_LocNet_40_40_360/train_test.prototxt"
 momentum: 0.9
 weight_decay: 0.00005
-base_lr: 0.0001
+base_lr: 0.001
 lr_policy: "step"
 gamma: 0.1
 stepsize: 60000

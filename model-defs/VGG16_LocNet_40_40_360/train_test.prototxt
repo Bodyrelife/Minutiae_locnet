@@ -1,10 +1,10 @@
 input: "data"
-input_shape{dim:2 dim:3 dim:600 dim:1000}
+input_shape{dim:2 dim:3 dim:600 dim:600}
 input: "regions_loc"
 input_shape{dim:128 dim:9} 
 input: "label"
 input_shape{dim:128 dim:440} # w(40) + h(40) + orientation(360)
-input: "loss_weights"
+input: "loss_weight"
 input_shape{dim:128 dim:440}
 
 #------------------------------------ ACTIVATION MAPS MODULE -----------------------------------
@@ -59,9 +59,9 @@ layer {name: "relu5_3" type: "ReLU" bottom: "conv5_3" top: "conv5_3"}
 
 #------------------------------- LOCALIZATION ADAPTATION MODULE ---------------------------------
 layer {name: "region_pool5_loc" type: "RegionPooling" bottom: "conv5_3" bottom: "regions_loc" top: "region_pool5_loc"
-  	region_pooling_param {pooled_w: 14 pooled_h: 14 spatial_scale: 0.0625 offset: 6}}
+  	region_pooling_param {pooled_w: 10 pooled_h: 10 spatial_scale: 0.0625 offset: 6}}
 
-layer { bottom: "region_pool5_loc" top: "conv6" name: "conv6" type: "Convolution" param { lr_mult: 10 decay_mult: 1 } param { lr_mult: 200 decay_mult: 0}
+layer { bottom: "region_pool5_loc" top: "conv6" name: "conv6" type: "Convolution" param { lr_mult: 10 decay_mult: 1 } param { lr_mult: 20 decay_mult: 0}
 	convolution_param { num_output: 512 kernel_size: 3 pad: 1 weight_filler{ type: "gaussian" std: 0.001} bias_filler{ type: "constant" value: 1}} }
 layer { bottom: "conv6" top: "conv6" name: "relu6" type: "ReLU" }
 
@@ -69,9 +69,9 @@ layer { bottom: "conv6" top: "conv7" name: "conv7" type: "Convolution" param { l
 	convolution_param { num_output: 512 kernel_size: 3 pad: 1 weight_filler{ type: "gaussian" std: 0.001} bias_filler{ type: "constant" value: 1}} }
 layer { bottom: "conv7" top: "conv7" name: "relu7" type: "ReLU" }
 
-layer {name: "pool7_x" type: "Pooling" bottom: "conv7" top: "pool7_x" pooling_param {pool: MAX kernel_w: 1 stride_w: 1 kernel_h: 14 stride_h: 14}}
-layer {name: "pool7_y" type: "Pooling" bottom: "conv7" top: "pool7_y" pooling_param {pool: MAX kernel_w: 14 stride_w: 14 kernel_h: 1 stride_h: 1}}
-layer {name: "pool7_o" type: "Pooling" bottom: "conv7" top: "pool7_o" pooling_param {pool: MAX kernel_w: 14 stride_w: 14 kernel_h: 14 stride_h: 14}}
+layer {name: "pool7_x" type: "Pooling" bottom: "conv7" top: "pool7_x" pooling_param {pool: MAX kernel_w: 1 stride_w: 1 kernel_h: 20 stride_h: 20}}
+layer {name: "pool7_y" type: "Pooling" bottom: "conv7" top: "pool7_y" pooling_param {pool: MAX kernel_w: 20 stride_w: 20 kernel_h: 1 stride_h: 1}}
+layer {name: "pool7_o" type: "Pooling" bottom: "conv7" top: "pool7_o" pooling_param {pool: MAX kernel_w: 20 stride_w: 20 kernel_h: 20 stride_h: 20}}
 
 layer { name: "fg_preds_x" type: "InnerProduct" bottom: "pool7_x" top: "fg_preds_x" param { lr_mult: 10 decay_mult: 1 } param { lr_mult: 20 decay_mult: 0}
 	 inner_product_param{ num_output: 40 weight_filler{type: "gaussian" std: 0.01} bias_filler{ type: "constant" value: 1}}}
@@ -84,7 +84,11 @@ layer { name: "fg_preds_o" type: "InnerProduct" bottom: "pool7_o" top: "fg_preds
 
 layer { name: "fg_preds" type: "Concat" bottom: "fg_preds_x" bottom: "fg_preds_y" bottom: "fg_preds_o" top: "fg_preds" concat_param{ concat_dim: 1} }
 
-layer { name: "loss" type: "SigmoidCrossEntropyLossWeighted" bottom: "fg_preds" bottom: "label" bottom: "loss_weights" top: "loss_loc" loss_weight: 20}
+layer {name: "fg_preds_flat" type: "Reshape" bottom: "fg_preds" top: "fg_preds_flat" reshape_param{shape {dim:-1 dim:1 dim:1 dim:1} }}
+layer {name: "label_flat"    type: "Reshape" bottom: "label"    top: "label_flat"    reshape_param{shape {dim:-1 dim:1 dim:1 dim:1} }}
+layer {name: "loss_weight_flat"    type: "Reshape" bottom: "loss_weight"    top: "loss_weight_flat"    reshape_param{shape {dim:-1 dim:1 dim:1 dim:1} }}
+
+layer { name: "loss" type: "SigmoidCrossEntropyLossWeighted" bottom: "fg_preds_flat" bottom: "label_flat" bottom: "loss_weight_flat" top: "loss_loc" loss_weight: 20}
 layer { name: "preds_loc" type: "Sigmoid" bottom: "fg_preds" top: "preds_loc"}
 layer { name: "preds_loc_silence" type: "Silence" bottom: "preds_loc"}
 #-------------------------------------------------------------------------------------------------
